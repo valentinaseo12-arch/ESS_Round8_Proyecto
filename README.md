@@ -36,6 +36,20 @@ DOI: https://doi.org/10.21338/NSD-ESS8-2016
 
 ## Como reproducir el proyecto
 
+La base de datos original ESS8e02_3.csv no se incluye en este repositorio debido a las limitaciones de tamaño de carga de GitHub.
+
+Para reproducir el proceso completo de importación y depuración, es necesario:
+
+Acceder al portal de datos de la European Social Survey.
+
+Buscar y descargar los datos de ESS Round 8 (2016), edición 2.3, en formato CSV.
+
+Guardar el archivo con el nombre ESS8e02_3.csv dentro de la carpeta Datos.
+
+Ejecutar el script Datos/01_importacion_depuracion.R desde la carpeta principal del proyecto.
+
+El repositorio incluye también Datos/ESS8_depurada.csv, por lo que es posible generar el dashboard, el informe y la presentación sin repetir previamente el proceso de limpieza.
+
 1. Descargar o clonar el repositorio.
 2. Abrir el proyecto de RStudio desde la carpeta principal.
 3. Instalar los paquetes necesarios.
