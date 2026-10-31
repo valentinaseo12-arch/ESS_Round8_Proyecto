@@ -1,0 +1,151 @@
+---
+title: "Bienestar subjetivo y confianza social en Europa"
+author: "Ana Valentina de la Serna Ocejo"
+date: "2026-10-31"
+output: html_document
+---
+
+---
+title: "Bienestar subjetivo y confianza social en Europa"
+subtitle: "Informe tecnico - European Social Survey 2016"
+author: "Ana Valentina de la Serna"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+
+# Cargar los paquetes necesarios
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+# Importar la base depurada
+datos <- read.csv(
+  "../Datos/ESS8_depurada.csv",
+  stringsAsFactors = FALSE
+)
+```
+
+# 1. Introduccion
+
+El bienestar subjetivo y la confianza social son dos aspectos relevantes para comprender como las personas perciben su calidad de vida y sus relaciones con los demas.
+
+Este proyecto utiliza los datos de la European Social Survey (ESS), Round 8, correspondiente al año 2016, para explorar los niveles de satisfaccion con la vida, felicidad y confianza interpersonal en distintos paises europeos.
+
+El analisis tiene un enfoque descriptivo y exploratorio, y busca identificar diferencias entre paises y grupos de edad, asi como posibles asociaciones entre los indicadores seleccionados.
+
+# 2. Objetivos
+
+## Objetivo general
+
+Analizar la relacion entre el bienestar subjetivo y la confianza interpersonal en la poblacion de los paises participantes en la European Social Survey Round 8 (2016), considerando las diferencias entre paises y determinadas caracteristicas sociodemograficas.
+
+## Objetivos especificos
+
+1. Describir los niveles de felicidad, satisfaccion con la vida y confianza interpersonal.
+2. Comparar los indicadores de bienestar subjetivo y confianza social entre paises.
+3. Explorar las diferencias en bienestar subjetivo segun grupos de edad.
+4. Examinar la relacion entre confianza interpersonal y satisfaccion con la vida.
+5. Presentar los resultados mediante herramientas de visualizacion reproducible.
+
+# 3. Metodologia
+
+Se utilizaron los datos de la European Social Survey Round 8 (2016), edicion 2.3.
+
+La base original contiene 44.387 observaciones y 535 variables. Para este proyecto se seleccionaron indicadores de satisfaccion con la vida, felicidad, confianza interpersonal, edad, nivel educativo y pais.
+
+La depuracion se realizo mediante codigo R, identificando los codigos especiales de respuestas ausentes y sustituyendolos por valores NA. Adicionalmente, se genero una variable de grupos de edad.
+
+Los analisis descriptivos presentados inicialmente utilizan medias no ponderadas y no permiten establecer relaciones causales.
+
+# 4. Resultados
+
+Los resultados descriptivos y las visualizaciones se presentan en los siguientes apartados.
+
+
+## 4.1. Estadisticos descriptivos generales
+
+Para comenzar el analisis, se calcularon los principales estadisticos descriptivos de las variables de satisfaccion con la vida, felicidad y confianza interpersonal. Los tres indicadores se miden en escalas de 0 a 10.
+
+```{r tabla_indicadores}
+tabla_indicadores <- datos %>%
+  summarise(
+    `Satisfaccion con la vida` = mean(stflife, na.rm = TRUE),
+    Felicidad = mean(happy, na.rm = TRUE),
+    `Confianza interpersonal` = mean(ppltrst, na.rm = TRUE)
+  ) %>%
+  tidyr::pivot_longer(
+    cols = everything(),
+    names_to = "Indicador",
+    values_to = "Media"
+  ) %>%
+  mutate(Media = round(Media, 2))
+
+knitr::kable(
+  tabla_indicadores,
+  caption = "Tabla 1. Medias generales de los indicadores analizados",
+  col.names = c("Indicador", "Media (0-10)")
+)
+```
+
+La tabla presenta las medias generales de los tres indicadores, calculadas a partir de las respuestas validas de la muestra. Estos valores permiten realizar una primera descripcion del bienestar subjetivo y la confianza social de las personas participantes.
+
+Las medias son descriptivas y no ponderadas, por lo que no deben interpretarse como estimaciones representativas del conjunto de la poblacion europea.
+
+
+## 4.2. Comparacion de los indicadores generales
+
+La Figura 1 presenta una comparacion de las medias de satisfaccion con la vida, felicidad y confianza interpersonal obtenidas en la muestra analizada.
+
+```{r grafico_indicadores, fig.width=8, fig.height=4.5}
+ggplot(
+  tabla_indicadores,
+  aes(x = reorder(Indicador, Media), y = Media)
+) +
+  geom_col(fill = "#527DA3", width = 0.6) +
+  geom_text(
+    aes(label = sprintf("%.2f", Media)),
+    hjust = -0.2,
+    size = 4
+  ) +
+  coord_flip() +
+  scale_y_continuous(
+    limits = c(0, 10),
+    breaks = seq(0, 10, 2)
+  ) +
+  labs(
+    title = "Bienestar subjetivo y confianza interpersonal",
+    subtitle = "Medias descriptivas de ESS Round 8 (2016)",
+    x = NULL,
+    y = "Media (escala de 0 a 10)",
+    caption = "Fuente: elaboracion propia con datos ESS8. Medias no ponderadas."
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+En la figura se observa que la felicidad presenta la media mas elevada (7.44), seguida de la satisfaccion con la vida (7.15). Por su parte, la confianza interpersonal registra una media inferior (5.27).
+
+Esta diferencia sugiere que las valoraciones personales del bienestar son, en promedio, mas positivas que las valoraciones de confianza hacia otras personas dentro de la muestra analizada. Sin embargo, estos resultados no permiten establecer relaciones causales ni generalizar las diferencias a toda la poblacion europea.
+
+# 5. Conclusiones
+
+El análisis de los datos de la European Social Survey Round 8 (2016) permitió explorar tres indicadores relacionados con el bienestar subjetivo y las relaciones sociales: la satisfacción con la vida, la felicidad y la confianza interpersonal.
+
+A partir de los resultados obtenidos, se identificó que la felicidad presentó el promedio más elevado (7.44), seguida de la satisfacción con la vida (7.15). Por otro lado, la confianza interpersonal registró un promedio menor (5.27). Esto permite observar que, dentro de la muestra analizada, las valoraciones del bienestar personal fueron más positivas que las relacionadas con la confianza hacia otras personas.
+
+El proyecto también permitió trabajar con una base de datos internacional, seleccionar variables relevantes y aplicar procedimientos de depuración y análisis mediante R. La elaboración de visualizaciones facilitó la exploración de los indicadores y permitió presentar los resultados de una manera más clara.
+
+Es importante señalar que los resultados corresponden a un análisis descriptivo con medias no ponderadas, por lo que deben interpretarse con precaución. Asimismo, las diferencias observadas no permiten establecer relaciones causales.
+
+En conjunto, este trabajo permitió aplicar distintas herramientas de análisis y visualización de datos para estudiar aspectos del bienestar subjetivo y la confianza social, además de desarrollar un procedimiento reproducible que puede ampliarse mediante análisis posteriores.
+# 6. Referencias
+
+European Social Survey. (2016). *ESS Round 8: European Social Survey Round 8 data (2016), integrated file, edition 2.3*. Sikt - Norwegian Agency for Shared Services in Education and Research. https://doi.org/10.21338/NSD-ESS8-2016

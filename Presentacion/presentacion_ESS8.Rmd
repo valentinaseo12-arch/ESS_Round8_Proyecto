@@ -1,0 +1,130 @@
+---
+title: "presentacion_ESS8"
+author: "Ana Valentina de la Serna Ocejo"
+date: "2026-10-31"
+output: ioslides_presentation
+---
+
+---
+title: "Bienestar subjetivo y confianza social en Europa"
+subtitle: "European Social Survey - Round 8 (2016)"
+author: "Ana Valentina de la Serna"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+datos <- read.csv(
+  "../Datos/ESS8_depurada.csv",
+  stringsAsFactors = FALSE
+)
+```
+
+## Introduccion
+
+El bienestar subjetivo y la confianza interpersonal son indicadores que permiten explorar como las personas valoran su calidad de vida y sus relaciones sociales.
+
+Este proyecto analiza datos de la European Social Survey (ESS), Round 8 (2016), mediante herramientas de analisis y visualizacion en R.
+
+## Objetivo del proyecto
+
+**Objetivo general**
+
+Analizar el bienestar subjetivo y la confianza interpersonal en los paises participantes en la ESS8.
+
+**Objetivos especificos**
+
+- Describir los niveles de felicidad, satisfaccion con la vida y confianza interpersonal.
+- Comparar los indicadores entre paises.
+- Explorar las diferencias entre grupos de edad.
+- Examinar la relacion entre confianza y satisfaccion con la vida.
+
+## Metodologia
+
+- **Fuente:** European Social Survey, Round 8 (2016).
+- **Base original:** 44.387 observaciones y 535 variables.
+- **Variables seleccionadas:** pais, satisfaccion con la vida, felicidad, confianza interpersonal, edad y nivel educativo.
+- **Procesamiento:** importacion, seleccion de variables, tratamiento de valores ausentes y creacion de grupos de edad.
+- **Herramientas:** R, RStudio, R Markdown y flexdashboard.
+
+Los resultados son descriptivos y se presentan sin ponderacion muestral.
+
+## Resultados generales
+
+```{r tabla_presentacion}
+tabla <- datos %>%
+  summarise(
+    `Satisfaccion con la vida` = mean(stflife, na.rm = TRUE),
+    Felicidad = mean(happy, na.rm = TRUE),
+    `Confianza interpersonal` = mean(ppltrst, na.rm = TRUE)
+  ) %>%
+  tidyr::pivot_longer(
+    cols = everything(),
+    names_to = "Indicador",
+    values_to = "Media"
+  ) %>%
+  mutate(Media = round(Media, 2))
+
+knitr::kable(
+  tabla,
+  col.names = c("Indicador", "Media (0-10)")
+)
+```
+
+## Comparacion de indicadores
+
+```{r grafico_presentacion, fig.width=8, fig.height=4.5}
+ggplot(
+  tabla,
+  aes(x = reorder(Indicador, Media), y = Media)
+) +
+  geom_col(fill = "#527DA3", width = 0.6) +
+  geom_text(
+    aes(label = sprintf("%.2f", Media)),
+    hjust = -0.2
+  ) +
+  coord_flip() +
+  scale_y_continuous(
+    limits = c(0, 10),
+    breaks = seq(0, 10, 2)
+  ) +
+  labs(
+    title = "Indicadores generales de ESS8",
+    x = NULL,
+    y = "Media (0-10)"
+  ) +
+  theme_minimal(base_size = 14)
+```
+
+## Interpretacion de resultados
+
+Los resultados descriptivos muestran que:
+
+- La felicidad presenta la media mas elevada (7.44).
+- La satisfaccion con la vida alcanza una media de 7.15.
+- La confianza interpersonal registra una media inferior (5.27).
+
+Estos valores describen la muestra analizada y no permiten establecer relaciones causales.
+
+## Conclusiones
+
+El analisis permitio explorar los niveles generales de bienestar subjetivo y confianza interpersonal en la muestra de la ESS8.
+
+Las valoraciones de felicidad y satisfaccion con la vida fueron, en promedio, superiores a las de confianza interpersonal.
+
+El proyecto tambien permitio aplicar procedimientos de limpieza, analisis y visualizacion de datos mediante herramientas reproducibles.
+
+## Referencia
+
+European Social Survey. (2016). *ESS Round 8 data, edition 2.3*.
+
+DOI: https://doi.org/10.21338/NSD-ESS8-2016

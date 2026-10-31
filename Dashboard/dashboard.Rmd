@@ -1,0 +1,272 @@
+---
+title: "Bienestar subjetivo y confianza social en Europa"
+author: "Ana Valentina de la Serna Ocejo"
+date: "2026-10-30"
+output: html_document
+---
+
+---
+title: "Bienestar subjetivo y confianza social en Europa"
+author: "Ana Valentina de la Serna"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+
+# Importar la base de datos depurada
+datos <- read.csv(
+  "../Datos/ESS8_depurada.csv",
+  stringsAsFactors = FALSE
+)
+```
+
+Column
+-------------------------------------
+
+### Satisfaccion con la vida por pais
+
+```{r}
+# Calcular la satisfaccion media por pais
+resumen_paises <- datos %>%
+  group_by(cntry) %>%
+  summarise(
+    satisfaccion = mean(stflife, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Crear grafico interactivo
+grafico <- ggplot(
+  resumen_paises,
+  aes(
+    x = reorder(cntry, satisfaccion),
+    y = satisfaccion
+  )
+) +
+  geom_col(fill = "#4472C4") +
+  coord_flip() +
+  labs(
+    x = "Pais",
+    y = "Satisfaccion media",
+    title = "Satisfaccion con la vida por pais"
+  ) +
+  theme_minimal()
+
+ggplotly(grafico)
+```
+
+### Felicidad y confianza interpersonal por pais
+
+```{r grafico_comparativo, echo=FALSE, message=FALSE, warning=FALSE}
+# Calcular las medias de felicidad y confianza por pais
+comparacion <- datos %>%
+  group_by(cntry) %>%
+  summarise(
+    felicidad = mean(happy, na.rm = TRUE),
+    confianza = mean(ppltrst, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Preparar los datos para el grafico
+comparacion_larga <- tidyr::pivot_longer(
+  comparacion,
+  cols = c(felicidad, confianza),
+  names_to = "Indicador",
+  values_to = "Media"
+)
+
+# Crear grafico interactivo
+grafico2 <- ggplot(
+  comparacion_larga,
+  aes(
+    x = cntry,
+    y = Media,
+    fill = Indicador
+  )
+) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Felicidad y confianza interpersonal por pais",
+    x = "Pais",
+    y = "Puntuacion media (0-10)",
+    fill = "Indicador"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    )
+  )
+
+ggplotly(grafico2)
+```
+
+### Bienestar subjetivo por grupos de edad
+
+```{r grafico_edad, echo=FALSE, message=FALSE, warning=FALSE}
+# Calcular los indicadores por grupo de edad
+resumen_edad <- datos %>%
+  filter(!is.na(grupo_edad)) %>%
+  group_by(grupo_edad) %>%
+  summarise(
+    satisfaccion = mean(stflife, na.rm = TRUE),
+    felicidad = mean(happy, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Organizar los datos para la visualizacion
+edad_larga <- tidyr::pivot_longer(
+  resumen_edad,
+  cols = c(satisfaccion, felicidad),
+  names_to = "Indicador",
+  values_to = "Media"
+)
+
+# Crear el grafico
+grafico3 <- ggplot(
+  edad_larga,
+  aes(
+    x = grupo_edad,
+    y = Media,
+    fill = Indicador
+  )
+) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Bienestar subjetivo por grupos de edad",
+    x = "Grupo de edad",
+    y = "Puntuacion media (0-10)",
+    fill = "Indicador"
+  ) +
+  coord_cartesian(ylim = c(0, 10)) +
+  theme_minimal()
+
+# Convertirlo en interactivo
+ggplotly(grafico3)
+```
+
+### Relacion entre confianza social y satisfaccion con la vida
+
+```{r grafico_relacion, echo=FALSE, message=FALSE, warning=FALSE}
+# Calcular los promedios por pais
+relacion_paises <- datos %>%
+  group_by(cntry) %>%
+  summarise(
+    satisfaccion = mean(stflife, na.rm = TRUE),
+    confianza = mean(ppltrst, na.rm = TRUE),
+    participantes = n(),
+    .groups = "drop"
+  )
+
+# Crear grafico de dispersion
+grafico4 <- ggplot(
+  relacion_paises,
+  aes(
+    x = confianza,
+    y = satisfaccion,
+    text = paste0(
+      "Pais: ", cntry,
+      "<br>Confianza: ", round(confianza, 2),
+      "<br>Satisfaccion: ", round(satisfaccion, 2),
+      "<br>Participantes: ", participantes
+    )
+  )
+) +
+  geom_point(
+    color = "#4472C4",
+    size = 3
+  ) +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "#E76F51"
+  ) +
+  labs(
+    title = "Confianza social y satisfaccion con la vida",
+    x = "Confianza interpersonal media (0-10)",
+    y = "Satisfaccion con la vida media (0-10)"
+  ) +
+  theme_minimal()
+
+# Convertir a grafico interactivo
+ggplotly(grafico4, tooltip = "text")
+```
+
+Column
+-------------------------------------
+
+### Exploracion interactiva por pais y edad
+
+```{r filtros_interactivos, echo=FALSE, message=FALSE, warning=FALSE}
+# Preparar los datos para los filtros
+datos_filtros <- datos %>%
+  filter(
+    !is.na(cntry),
+    !is.na(grupo_edad),
+    !is.na(stflife),
+    !is.na(ppltrst)
+  )
+
+# Crear un conjunto de datos compartido
+datos_compartidos <- crosstalk::SharedData$new(
+  datos_filtros,
+  key = ~seq_len(nrow(datos_filtros)),
+  group = "filtros_ess"
+)
+
+# Crear los controles interactivos
+filtro_pais <- crosstalk::filter_select(
+  id = "pais",
+  label = "Seleccionar pais",
+  sharedData = datos_compartidos,
+  group = ~cntry,
+  multiple = TRUE
+)
+
+filtro_edad <- crosstalk::filter_select(
+  id = "edad",
+  label = "Seleccionar grupo de edad",
+  sharedData = datos_compartidos,
+  group = ~grupo_edad,
+  multiple = TRUE
+)
+
+# Grafico que responde a los filtros
+grafico_filtrado <- plotly::plot_ly(
+  datos_compartidos,
+  x = ~ppltrst,
+  y = ~stflife,
+  type = "scatter",
+  mode = "markers",
+  marker = list(
+    size = 5,
+    opacity = 0.3
+  ),
+  text = ~paste(
+    "Pais:", cntry,
+    "<br>Grupo de edad:", grupo_edad
+  ),
+  hoverinfo = "text+x+y"
+) %>%
+  plotly::layout(
+    title = "Confianza y satisfaccion individual",
+    xaxis = list(title = "Confianza interpersonal"),
+    yaxis = list(title = "Satisfaccion con la vida")
+  )
+
+# Mostrar filtros y grafico juntos
+htmltools::browsable(
+  htmltools::tagList(
+    filtro_pais,
+    filtro_edad,
+    grafico_filtrado
+  )
+)
+```
